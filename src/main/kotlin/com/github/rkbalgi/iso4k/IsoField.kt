@@ -1,13 +1,16 @@
 package com.github.rkbalgi.iso4k
 
 import com.github.rkbalgi.iso4k.charsets.Charsets
+import com.sun.org.apache.xpath.internal.operations.Bool
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Byte.parseByte
+import java.lang.UnsupportedOperationException
 import java.nio.ByteBuffer
 import java.sql.Types.BINARY
 import java.util.*
+import kotlin.experimental.and
 
 enum class DataEncoding {
     ASCII, BCD, BINARY, EBCDIC
@@ -66,6 +69,9 @@ fun IsoField.parse(buf: ByteBuffer): FieldData {
         FieldType.Variable -> {
             parseVariable(this, buf)
         }
+        FieldType.Bitmapped -> {
+            parseBitmapped(this, buf)
+        }
     }
 
 
@@ -84,10 +90,39 @@ fun ByteArray.decodeToHexString(): String {
 fun fromHexString(str: String): ByteArray {
     assert(str.length % 2 == 0)
     val res = ByteArray(str.length / 2)
-    str.chunked(2).foldRightIndexed(res) { i, a, acc -> acc[i] = Integer.parseInt(a, 16).toByte(); return acc }
+
+    var i = 0
+    str.chunked(2).forEach { a ->
+        res[i++] = Integer.parseInt(a, 16).toByte()
+    }
     return res
 }
 
+fun Byte.isHighBitSet(): Boolean {
+    return (this and 0x80.toByte()) == 0x80.toByte()
+}
+
+fun parseBitmapped(field: IsoField, buf: ByteBuffer) {
+
+    when (field.dataEncoding) {
+        DataEncoding.BINARY -> {
+
+            val bmpData = ByteArray(24);
+            buf.get(bmpData, 0, 8)
+            if (bmpData[0].isHighBitSet()) {
+                //secondary bitmap present
+                buf.get(bmpData, 8, 8)
+                if (bmpData[8].isHighBitSet()) {
+                    //tertiary also present
+                    buf.get(bmpData, 16, 8)
+                }
+            }
+        }
+        else -> {
+            TODO("bitmap unimplemented for encoding type: $field.dataEncoding")
+        }
+    }
+}
 
 fun parseFixed(field: IsoField, buf: ByteBuffer) {
 
@@ -124,7 +159,7 @@ fun parseVariable(field: IsoField, buf: ByteBuffer) {
 
 }
 
-private fun readFieldLength(field: IsoField, buffer: ByteBuffer): Int {
+internal fun readFieldLength(field: IsoField, buffer: ByteBuffer): Int {
     val tmp = ByteArray(field.len)
     buffer.get(tmp)
     return Charsets.toString(tmp, field.lengthEncoding!!).toInt()
