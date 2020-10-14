@@ -1,19 +1,25 @@
 package com.github.rkbalgi.iso4k
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import java.nio.ByteBuffer
+
 /**
  * A MessageSegment defines the layout of structure of a message (a request or a response etc)
  *
  */
-class MessageSegment() {
+class MessageSegment(val name: String) {
 
+
+    @JsonProperty("id")
+    val id: Int = 0
     private lateinit var spec: Spec
+
+    @JsonProperty("selector")
     private lateinit var selectors: List<String>
+
+    @JsonProperty("fields")
     private lateinit var fields: List<IsoField>
 
-
-    constructor(_spec: Spec) {
-        spec = _spec
-    }
 
     fun spec(): Spec {
         return spec
@@ -23,8 +29,15 @@ class MessageSegment() {
         return fields;
     }
 
-    fun selectorMatch(selector: String) :Boolean{
+    fun selectorMatch(selector: String): Boolean {
         return false;
+    }
+
+    fun parse(msgData: ByteArray): Message {
+        val msg = Message(this)
+        val msgBuf=ByteBuffer.wrap(msgData)
+        fields.forEach { it.parse(msg, msgBuf) }
+        return msg
     }
 
 }

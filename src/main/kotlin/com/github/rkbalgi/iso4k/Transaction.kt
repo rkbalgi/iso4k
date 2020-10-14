@@ -1,17 +1,12 @@
 package com.github.rkbalgi.iso4k
 
-class Transaction {
+class Transaction(private val req: Message) {
 
 
-    private lateinit var request: Message;
     private lateinit var response: Message;
 
-    constructor(_req: Message){
-        request=_req
-    }
-
     fun request(): Message {
-        return request
+        return req
     }
 
     fun response(): Message {

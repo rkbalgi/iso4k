@@ -1,14 +1,11 @@
 package com.github.rkbalgi.iso4k
 
-import com.github.rkbalgi.iso4k.charsets.Charsets
-import com.sun.org.apache.xpath.internal.operations.Bool
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.github.rkbalgi.iso4k.charsets.Charsets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.Byte.parseByte
-import java.lang.UnsupportedOperationException
 import java.nio.ByteBuffer
-import java.sql.Types.BINARY
 import java.util.*
 import kotlin.experimental.and
 
@@ -25,10 +22,13 @@ data class IsoField(
     val name: String,
     val type: FieldType,
     val len: Int,
-    val dataEncoding: DataEncoding,
-    val lengthEncoding: DataEncoding?,
-    val children: Array<IsoField>?
-) {
+    @JsonProperty("data_encoding") val dataEncoding: DataEncoding,
+    @JsonProperty("len_encoding") val lengthEncoding: DataEncoding?,
+    val children: Array<IsoField>?,
+    var position: Int = 0,
+    var key: Boolean = false,
+
+    ) {
 
 
     companion object {
@@ -54,28 +54,27 @@ data class IsoField(
     override fun hashCode(): Int {
         return Objects.hash(id, name)
     }
+
+
 }
 
-data class FieldData(val field: IsoField, val data: ByteArray)
+data class FieldData(val field: IsoField, val data: ByteArray) {
+    fun encodeToString(): String {
+        return Charsets.toString(data, field.dataEncoding)
+    }
+}
 
 val LOG: Logger = LoggerFactory.getLogger(IsoField::class.java)
 
-fun IsoField.parse(buf: ByteBuffer): FieldData {
+fun IsoField.parse(msg: Message, buf: ByteBuffer) {
 
     when (type) {
-        FieldType.Fixed -> {
-            parseFixed(this, buf)
-        }
-        FieldType.Variable -> {
-            parseVariable(this, buf)
-        }
-        FieldType.Bitmapped -> {
-            parseBitmapped(this, buf)
-        }
+        FieldType.Fixed -> parseFixed(this, msg, buf)
+        FieldType.Variable -> parseVariable(this, msg, buf)
+        FieldType.Bitmapped -> parseBitmapped(this, msg, buf)
+        FieldType.Terminated -> TODO("support terminated fields")
     }
 
-
-    return FieldData(this, ByteArray(10))
 }
 
 
@@ -102,21 +101,26 @@ fun Byte.isHighBitSet(): Boolean {
     return (this and 0x80.toByte()) == 0x80.toByte()
 }
 
-fun parseBitmapped(field: IsoField, buf: ByteBuffer) {
+private fun parseBitmapped(field: IsoField, msg: Message, buf: ByteBuffer) {
 
     when (field.dataEncoding) {
         DataEncoding.BINARY -> {
 
             val bmpData = ByteArray(24);
-            buf.get(bmpData, 0, 8)
+            buf.get(buf.position(), bmpData, 0, 8)
+            buf.position(buf.position() + 8)
             if (bmpData[0].isHighBitSet()) {
                 //secondary bitmap present
-                buf.get(bmpData, 8, 8)
+                buf.get(buf.position(), bmpData, 8, 8)
+                buf.position(buf.position() + 8)
                 if (bmpData[8].isHighBitSet()) {
                     //tertiary also present
-                    buf.get(bmpData, 16, 8)
+                    buf.get(buf.position(), bmpData, 16, 8)
+                    buf.position(buf.position() + 8)
                 }
             }
+            msg.setBitmap(IsoBitmap(bmpData, field, msg))
+            field.children?.filter { it.position > 0 && msg.bitmap().isOn(it.position) }?.forEach { it.parse(msg, buf) }
         }
         else -> {
             TODO("bitmap unimplemented for encoding type: $field.dataEncoding")
@@ -124,36 +128,49 @@ fun parseBitmapped(field: IsoField, buf: ByteBuffer) {
     }
 }
 
-fun parseFixed(field: IsoField, buf: ByteBuffer) {
+private fun parseFixed(field: IsoField, msg: Message, buf: ByteBuffer) {
 
-    buf.mark()
-    val tmp = ByteArray(field.len)
-    buf.get(tmp)
-    LOG.debug("field {}: data: {}", field.name, tmp.decodeToHexString())
-    buf.reset()
+
+    val data = ByteArray(field.len)
+    buf.get(data)
+    val fieldData = FieldData(field, data)
+    setAndLog(msg, fieldData)
+
 
     if (field.hasChildren()) {
-        field.children!!.forEach {
-            it.parse(buf)
+        field.children?.forEach {
+            //TODO:: can rewind and try without a fresh allocation
+            val newBuf = ByteBuffer.wrap(data)
+            it.parse(msg, newBuf)
         }
     }
 
 }
 
+internal fun setAndLog(msg: Message, fieldData: FieldData) {
+    msg.setFieldData(fieldData.field, fieldData)
+    LOG.debug(
+        "field ${fieldData.field.name}: data(raw): ${fieldData.data.decodeToHexString()} data(encoded): ${fieldData.encodeToString()}"
+    )
 
-fun parseVariable(field: IsoField, buf: ByteBuffer) {
+}
+
+
+fun parseVariable(field: IsoField, msg: Message, buf: ByteBuffer) {
 
 
     val len = readFieldLength(field, buf)
-    val tmp = ByteArray(len)
-    buf.get(tmp)
-    LOG.debug("field {}: data: {}", field.name, tmp.decodeToHexString())
+    val data = ByteArray(len)
 
-    val newBuf = ByteBuffer.wrap(tmp)
+    buf.get(data)
+    val fieldData = FieldData(field, data)
+    setAndLog(msg, fieldData)
+
 
     if (field.hasChildren()) {
-        field.children!!.forEach {
-            it.parse(newBuf)
+        val newBuf = ByteBuffer.wrap(data)
+        field.children?.forEach {
+            it.parse(msg, newBuf)
         }
     }
 
@@ -162,7 +179,13 @@ fun parseVariable(field: IsoField, buf: ByteBuffer) {
 internal fun readFieldLength(field: IsoField, buffer: ByteBuffer): Int {
     val tmp = ByteArray(field.len)
     buffer.get(tmp)
+
+    if (field.lengthEncoding == DataEncoding.BINARY) {
+        return Charsets.toString(tmp, field.lengthEncoding).toInt(16)
+    }
+
     return Charsets.toString(tmp, field.lengthEncoding!!).toInt()
+
 }
 
 internal fun buildLengthIndicator(encoding: DataEncoding, len: Int, dataLength: Int): ByteArray {
