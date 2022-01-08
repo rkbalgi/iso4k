@@ -23,8 +23,15 @@ class Message(val messageSegment: MessageSegment) {
         this.bitmap = bitmap
     }
 
-    fun get(fieldName: String): FieldData {
-        return fieldDataMap.filter { it.key.name == fieldName }.toList().first { true }.second
+    fun get(fieldName: String): FieldData? {
+        val res = fieldDataMap.filter { it.key.name == fieldName }
+        return if (res.isNotEmpty()) {
+            res.values.stream().findFirst().get()
+        } else {
+            null
+        }
+
+
     }
 
 

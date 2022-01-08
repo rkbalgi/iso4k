@@ -77,6 +77,21 @@ fun IsoField.parse(msg: Message, buf: ByteBuffer) {
 
 }
 
+fun IsoField.parse(buf: ByteBuffer): String {
+
+    when (type) {
+        FieldType.Fixed -> {
+
+            val data = ByteArray(len)
+            buf.get(data)
+            return FieldData(this, data).encodeToString()
+        }
+
+
+        else -> TODO("only fixed type supported for header fields")
+    }
+
+}
 
 fun ByteArray.decodeToHexString(): String {
     return this.joinToString("") { String.format("%02x", (0xff and it.toInt())) }
@@ -107,16 +122,19 @@ private fun parseBitmapped(field: IsoField, msg: Message, buf: ByteBuffer) {
         DataEncoding.BINARY -> {
 
             val bmpData = ByteArray(24);
-            buf.get(buf.position(), bmpData, 0, 8)
-            buf.position(buf.position() + 8)
+
+
+
+            buf.get(bmpData, 0, 8)
+            //buf.position(buf.position() + 8)
             if (bmpData[0].isHighBitSet()) {
                 //secondary bitmap present
-                buf.get(buf.position(), bmpData, 8, 8)
-                buf.position(buf.position() + 8)
+                buf.get(bmpData, 8, 8)
+                //buf.position(buf.position() + 8)
                 if (bmpData[8].isHighBitSet()) {
                     //tertiary also present
-                    buf.get(buf.position(), bmpData, 16, 8)
-                    buf.position(buf.position() + 8)
+                    buf.get(bmpData, 16, 8)
+                    //buf.position(buf.position() + 8)
                 }
             }
             msg.setBitmap(IsoBitmap(bmpData, field, msg))

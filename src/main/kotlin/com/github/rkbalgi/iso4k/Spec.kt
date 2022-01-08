@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-
+import java.nio.ByteBuffer
 
 
 class Spec(val name: String, val id: Int) {
@@ -35,6 +35,20 @@ class Spec(val name: String, val id: Int) {
 
     fun message(msgName: String): MessageSegment? {
         return messageSegments.find { it.name == msgName }
+    }
+
+    fun findMessage(msgData: ByteArray): String? {
+        val bb = ByteBuffer.wrap(msgData)
+        var headerVal = headerFields.stream().map { it.parse(bb) }.reduce { acc, a -> (acc + a) }.get()
+
+
+        var msgSegment = messageSegments.stream().filter { it.selectorMatch(headerVal) }.findFirst()
+        return if (msgSegment.isPresent)
+            msgSegment.get().name
+        else
+            null
+
+
     }
 
     companion object {

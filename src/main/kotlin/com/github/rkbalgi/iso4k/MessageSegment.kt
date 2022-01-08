@@ -30,12 +30,12 @@ class MessageSegment(val name: String) {
     }
 
     fun selectorMatch(selector: String): Boolean {
-        return false;
+        return selectors.stream().filter { it.equals(selector) }.findAny().isPresent
     }
 
     fun parse(msgData: ByteArray): Message {
         val msg = Message(this)
-        val msgBuf=ByteBuffer.wrap(msgData)
+        val msgBuf = ByteBuffer.wrap(msgData)
         fields.forEach { it.parse(msg, msgBuf) }
         return msg
     }
