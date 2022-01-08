@@ -24,7 +24,7 @@ internal class MiscTests {
 
         val msgData = fromHexString("31313030")
         Assert.assertEquals("1100 - Authorization", spec!!.findMessage(msgData))
-        Assert.assertNull(spec!!.findMessage(fromHexString("31313131")))
+        Assert.assertNull(spec.findMessage(fromHexString("31313131")))
         
     }
 

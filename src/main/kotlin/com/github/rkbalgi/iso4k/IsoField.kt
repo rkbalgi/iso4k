@@ -126,18 +126,16 @@ private fun parseBitmapped(field: IsoField, msg: Message, buf: ByteBuffer) {
 
 
             buf.get(bmpData, 0, 8)
-            //buf.position(buf.position() + 8)
             if (bmpData[0].isHighBitSet()) {
                 //secondary bitmap present
                 buf.get(bmpData, 8, 8)
-                //buf.position(buf.position() + 8)
                 if (bmpData[8].isHighBitSet()) {
                     //tertiary also present
                     buf.get(bmpData, 16, 8)
-                    //buf.position(buf.position() + 8)
                 }
             }
             msg.setBitmap(IsoBitmap(bmpData, field, msg))
+            setAndLog(msg, FieldData(field,bmpData))
             field.children?.filter { it.position > 0 && msg.bitmap().isOn(it.position) }?.forEach { it.parse(msg, buf) }
         }
         else -> {
