@@ -1,13 +1,13 @@
-package com.github.rkbalgi.iso4k
+package io.github.rkbalgi.iso4k
 
-import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.Assert.assertArrayEquals
+import org.junit.Test
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
+
 
 internal class IsoFieldKtTest {
 
     @Test
-    @DisplayName("build ASCII length indicator")
     fun testBuildAsciiLengthIndicator() {
 
         var res = buildLengthIndicator(DataEncoding.ASCII, 2, 18)
@@ -27,7 +27,7 @@ internal class IsoFieldKtTest {
 
 
     @Test
-    @DisplayName("build EBCDIC length indicator")
+    //@DisplayName("build EBCDIC length indicator")
     fun testBuildEbcdicLengthIndicator() {
 
 

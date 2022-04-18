@@ -1,4 +1,4 @@
-package com.github.rkbalgi.iso4k
+package io.github.rkbalgi.iso4k
 
 import com.google.common.primitives.Longs
 
@@ -8,7 +8,7 @@ class IsoBitmap(private val bmpData: ByteArray, var field: IsoField?, msg: Messa
     private var l2: Long = Longs.fromByteArray(bmpData.sliceArray(8..15))
     private var l3: Long = Longs.fromByteArray(bmpData.sliceArray(16..23))
 
-    private var msg: Message? = null
+    private var msg: Message? = msg
 
 
     constructor() : this(ByteArray(24), null, null) {

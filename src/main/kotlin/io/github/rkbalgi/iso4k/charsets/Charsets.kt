@@ -1,8 +1,8 @@
-package com.github.rkbalgi.iso4k.charsets;
+package io.github.rkbalgi.iso4k.charsets;
 
-import com.github.rkbalgi.iso4k.DataEncoding
-import com.github.rkbalgi.iso4k.decodeToHexString
-import com.github.rkbalgi.iso4k.fromHexString
+import io.github.rkbalgi.iso4k.DataEncoding
+import io.github.rkbalgi.iso4k.decodeToHexString
+import io.github.rkbalgi.iso4k.fromHexString
 import java.nio.charset.Charset
 
 class Charsets {

@@ -1,8 +1,8 @@
-package com.github.rkbalgi.iso4k
+package io.github.rkbalgi.iso4k
 
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.github.rkbalgi.iso4k.charsets.Charsets
+import io.github.rkbalgi.iso4k.charsets.Charsets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
@@ -102,6 +102,8 @@ fun ByteArray.decodeToHexString(): String {
  * @return ByteArray
  */
 fun fromHexString(str: String): ByteArray {
+
+    
     assert(str.length % 2 == 0)
     val res = ByteArray(str.length / 2)
 

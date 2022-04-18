@@ -1,7 +1,8 @@
-package com.github.rkbalgi.iso4k
+package io.github.rkbalgi.iso4k
+
 
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.*
+import kotlin.test.DefaultAsserter.assertEquals
 
 internal class IsoBitmapTest {
 
@@ -9,7 +10,7 @@ internal class IsoBitmapTest {
     fun testBitmap() {
 
         val bmpData = fromHexString("f02420000000100e00000001000000010000000000000000")
-        val bmp = IsoBitmap(bmpData,null,null)
+        val bmp = IsoBitmap(bmpData, null, null)
 
         for (i in 1..192) {
             if (bmp.isOn(i)) {
@@ -17,13 +18,14 @@ internal class IsoBitmapTest {
             }
         }
 
-        assertEquals(true, bmp.isOn(1))
-        assertEquals(true, bmp.isOn(4))
-        assertEquals(true, bmp.isOn(14))
-        assertEquals(false, bmp.isOn(64))
-        assertEquals(true, bmp.isOn(96))
-        assertEquals(true, bmp.isOn(61))
-        assertEquals(true, bmp.isOn(128))
+
+        assertEquals("", true, bmp.isOn(1))
+        assertEquals("", true, bmp.isOn(4))
+        assertEquals("", true, bmp.isOn(14))
+        assertEquals("", false, bmp.isOn(64))
+        assertEquals("", true, bmp.isOn(96))
+        assertEquals("", true, bmp.isOn(61))
+        assertEquals("", true, bmp.isOn(128))
 
     }
 
@@ -33,7 +35,7 @@ internal class IsoBitmapTest {
         val bmp = IsoBitmap()
         listOf<Int>(1, 2, 3, 4, 11, 14, 19, 52, 61, 62, 63, 96, 128).forEach { bmp.setOn(it) }
         val res = bmp.bytes().decodeToHexString()
-        assertEquals("f02420000000100e00000001000000010000000000000000", res)
+        assertEquals("", "f02420000000100e00000001000000010000000000000000", res)
 
 
     }

@@ -1,15 +1,9 @@
-package com.github.rkbalgi
+package io.github.rkbalgi
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.github.rkbalgi.iso4k.Spec
-import com.github.rkbalgi.iso4k.fromHexString
+import io.github.rkbalgi.iso4k.Spec
+import io.github.rkbalgi.iso4k.fromHexString
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -43,45 +37,6 @@ internal class MiscTests {
         assertEquals("004000", msg.bitmap().get(3).encodeToString())
         assertEquals("reserved_1", msg.bitmap().get(61).encodeToString())
 
-
-    }
-
-    @Test
-    fun testPermute() {
-
-        val str = "abcd"
-
-        val res = mutableListOf<String>()
-        permute(str.toCharArray(), res, 0)
-
-        res.forEachIndexed { i, s -> println("$i $s") }
-
-
-    }
-
-    private fun permute(arr: CharArray, res: MutableList<String>, index: Int) {
-
-        if (index == arr.size - 1) {
-            res.add(String(arr))
-            return
-        }
-
-
-        for (j in index until arr.size) {
-
-            //do swap
-            val t = arr[index]
-            arr[index] = arr[j]
-            arr[j] = t
-
-            permute(String(arr).toCharArray(), res, index + 1);
-
-            val t2 = arr[index]
-            arr[index] = arr[j]
-            arr[j] = t2
-
-
-        }
 
     }
 

@@ -1,4 +1,4 @@
-package com.github.rkbalgi.iso4k
+package io.github.rkbalgi.iso4k
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
