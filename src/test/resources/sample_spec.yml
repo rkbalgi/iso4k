@@ -1,5 +1,11 @@
 name: SampleSpec
 id: 3
+request_response_mti_mapping:
+  - request_mti: 1100
+    response_mti: 1110
+  - request_mti: 1420
+    response_mti: 1430
+
 header_fields:
   - name: "hdr_msg_type"
     id: 1
@@ -8,7 +14,7 @@ header_fields:
     data_encoding: ASCII
     children: []
 messages:
-  - name: "1100 - Authorization"
+  - name: "1100/1110 - Authorization"
     selector:
       - "1100"
       - "1110"
@@ -143,7 +149,7 @@ messages:
             data_encoding: ASCII
             position: 160
 
-  - name: "1420 - Reversal"
+  - name: "1420/1430 - Reversal"
     selector:
       - "1420"
       - "1430"

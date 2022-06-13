@@ -32,6 +32,8 @@ val projectVersion by properties
 group = "io.github.rkbalgi"
 version = projectVersion!!
 
+java.sourceCompatibility=org.gradle.api.JavaVersion.VERSION_1_8
+java.targetCompatibility=org.gradle.api.JavaVersion.VERSION_1_8
 
 allprojects {
     plugins.withId("com.vanniktech.maven.publish") {
